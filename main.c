@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "stm32f4xx.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -62,6 +63,49 @@ static void MX_USART2_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+
+uint32_t local_time, sensor_time;
+uint32_t distance;
+
+uint32_t hcsr04_read (void)
+{
+	local_time=0;
+	HAL_GPIO_WritePin(GPIOA, TRIG_Pin, GPIO_PIN_RESET);  // pull the TRIG pin HIGH
+	HAL_Delay(.002);  // wait for 2 us
+
+
+	HAL_GPIO_WritePin(GPIOA, TRIG_Pin, GPIO_PIN_SET);  // pull the TRIG pin HIGH
+	HAL_Delay(.01);  // wait for 10 us
+	HAL_GPIO_WritePin(GPIOA, TRIG_Pin, GPIO_PIN_RESET);  // pull the TRIG pin low
+
+	// read the time for which the pin is high
+
+	while (!(HAL_GPIO_ReadPin(GPIOA, ECHO_Pin)));  // wait for the ECHO pin to go high
+	while (HAL_GPIO_ReadPin(GPIOA, ECHO_Pin))    // while the pin is high
+	 {
+		local_time++;   // measure time for which the pin is high
+		HAL_Delay(.001);  // wait for 1 us
+	 }
+	return local_time*2;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* USER CODE END 0 */
 
 /**
@@ -73,7 +117,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-  
+
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -108,7 +152,16 @@ int main(void)
 
 
 	  HAL_GPIO_TogglePin(GPIOA, LD2_Pin);
-	  HAL_Delay(1000);
+
+
+	  sensor_time = hcsr04_read();
+	  distance  = sensor_time * .034/2;
+
+
+	  HAL_Delay(60);
+
+
+
 
 
 
@@ -131,11 +184,11 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage 
+  /** Configure the main internal regulator output voltage
   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -150,7 +203,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks 
+  /** Initializes the CPU, AHB and APB busses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
@@ -296,7 +349,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
-{ 
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
