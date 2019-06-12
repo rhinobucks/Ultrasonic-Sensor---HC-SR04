@@ -21,6 +21,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx.h"
+#include "dwt_stm32_delay.h"
+
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -63,42 +65,39 @@ static void MX_USART2_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-
+int k=0;
 uint32_t local_time, sensor_time;
 uint32_t distance;
 
 uint32_t hcsr04_read (void)
 {
+
 	local_time=0;
 	HAL_GPIO_WritePin(GPIOA, TRIG_Pin, GPIO_PIN_RESET);  // pull the TRIG pin HIGH
-	HAL_Delay(.002);  // wait for 2 us
+	DWT_Delay_us(2); //wait for 2 us
 
 
 	HAL_GPIO_WritePin(GPIOA, TRIG_Pin, GPIO_PIN_SET);  // pull the TRIG pin HIGH
-	HAL_Delay(.01);  // wait for 10 us
+	DWT_Delay_us(10); //wait for 10 us
+
 	HAL_GPIO_WritePin(GPIOA, TRIG_Pin, GPIO_PIN_RESET);  // pull the TRIG pin low
 
 	// read the time for which the pin is high
 
-	while (!(HAL_GPIO_ReadPin(GPIOA, ECHO_Pin)));  // wait for the ECHO pin to go high
+	while (!(HAL_GPIO_ReadPin(GPIOA, ECHO_Pin)))// wait for the ECHO pin to go high
+	{
+		//HAL_GPIO_WritePin(GPIOA, LD2_Pin,GPIO_PIN_RESET);
+	}
+
 	while (HAL_GPIO_ReadPin(GPIOA, ECHO_Pin))    // while the pin is high
 	 {
+		//HAL_GPIO_WritePin(GPIOA, LD2_Pin, GPIO_PIN_SET);
 		local_time++;   // measure time for which the pin is high
-		HAL_Delay(.001);  // wait for 1 us
+		DWT_Delay_us(1); //wait for 1 us
+
 	 }
 	return local_time*2;
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -126,6 +125,8 @@ int main(void)
 
   /* USER CODE BEGIN Init */
 
+  DWT_Delay_Init();
+
   /* USER CODE END Init */
 
   /* Configure the system clock */
@@ -145,32 +146,41 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+
+
+  HAL_GPIO_WritePin(GPIOA, TRIG_Pin, GPIO_PIN_RESET);  // pull the TRIG pin low
+
   while (1)
   {
     /* USER CODE END WHILE */
 
 
 
-	  HAL_GPIO_TogglePin(GPIOA, LD2_Pin);
+
 
 
 	  sensor_time = hcsr04_read();
-	  distance  = sensor_time * .034/2;
+	  distance  = sensor_time * (.034/2); // meters per second * seconds
 
 
-	  HAL_Delay(60);
-
-
-
+	  HAL_Delay(200);
 
 
 
+	/*
 
 
 
+		HAL_GPIO_WritePin(GPIOA, TRIG_Pin, GPIO_PIN_SET);  // pull the TRIG pin HIGH
+		DWT_Delay_us(10);  // wait for
+		HAL_GPIO_WritePin(GPIOA, TRIG_Pin, GPIO_PIN_RESET);  // pull the TRIG pin low
+		DWT_Delay_us(10);  // wait for
+		k++;
 
 
-    /* USER CODE BEGIN 3 */
+
+    USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
 }
